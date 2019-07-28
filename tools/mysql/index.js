@@ -1,4 +1,4 @@
-const { connectionForChange, connectionForPaint } = require('./connect');
+const { connectionForChance, connectionForPaint } = require('./connect');
 
 const db = (connect, sql) => {
   return new Promise((res, rej) => {
@@ -14,6 +14,6 @@ const db = (connect, sql) => {
 
 module.exports = {
   db,
-  connectionForChange,
+  connectionForChance,
   connectionForPaint
 };

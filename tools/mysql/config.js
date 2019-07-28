@@ -1,9 +1,9 @@
-const changeConfig = {
+const chanceConfig = {
   host: 'localhost',
   user: 'root',
   password: 'root',
   port: '3306',
-  database: 'change'
+  database: 'chance'
 };
 
 const paintConfig = {
@@ -15,6 +15,6 @@ const paintConfig = {
 };
 
 module.exports = {
-  changeConfig,
+  chanceConfig,
   paintConfig
 };
