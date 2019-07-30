@@ -1,4 +1,4 @@
-const router = require("koa-router")();
+const router = require('koa-router')();
 const {
   statusController,
   startOrCloseController,
@@ -7,27 +7,28 @@ const {
   savePaintAudienceController,
   getRankController,
   canPaintController,
+  getStartTimeController,
   againIntoController
-} = require("../controllers/paint");
+} = require('../controllers/paint');
 
-router.prefix("/paint");
+router.prefix('/paint');
 
 // 判断主播进入小程序的状态，是否没结束上一次的游戏
-router.get("/status", async ctx => {
+router.get('/status', async ctx => {
   const { anchorID } = ctx.query;
   let result = await statusController(anchorID);
   let msg;
   switch (result.code) {
     case 2001: {
-      msg = "主播第一次进入";
+      msg = '主播第一次进入';
       break;
     }
     case 2002: {
-      msg = "主播可以正常开始";
+      msg = '主播可以正常开始';
       break;
     }
     case 2003: {
-      msg = "主播上次游戏没结束";
+      msg = '主播上次游戏没结束';
       break;
     }
     default:
@@ -47,56 +48,49 @@ router.get("/status", async ctx => {
 });
 
 // 主播点击开始/结束小程序
-router.get("/start2close", async ctx => {
+router.get('/start2close', async ctx => {
   const { anchorID, status, time } = ctx.query;
   await startOrCloseController({ anchorID, status, time });
 
   ctx.body = {
     code: 200,
-    msg: `主播${Number(status) ? "开始" : "结束"}小程序`
+    msg: `主播${Number(status) ? '开始' : '结束'}小程序`
   };
 });
 
+// 观众加入小程序
+router.get('/takeParkIn', async ctx => {
+  const { anchorID, id } = ctx.query;
+  let result = await takeParkInController({ anchorID, id });
+  ctx.body = result;
+});
+
+// 获取时间
+router.get('/getStartTime', async ctx => {
+  const { anchorID } = ctx.query;
+  let result = await getStartTimeController({ anchorID });
+  ctx.body = result;
+});
+
 // 主播绘制作品
-router.post("/startPaintAnchor", async ctx => {
-  const { anchorID, path, gameTime } = ctx.request.body;
-  console.log(path);
+router.post('/startPaintAnchor', async ctx => {
+  const { anchorID, path } = ctx.request.body;
   try {
-    await savePathAnchorController({ anchorID, path, gameTime });
+    await savePathAnchorController({ anchorID, path });
     ctx.body = {
       code: 200,
-      msg: "主播绘制成功"
+      msg: '主播绘制成功'
     };
   } catch (error) {
     ctx.body = {
-      code: 510,
+      code: 2006,
       msg: `主播还没开始小程序`
     };
   }
 });
 
-// 观众加入小程序
-router.get("/takeParkIn", async ctx => {
-  const { anchorID, id } = ctx.query;
-  let result = await takeParkInController({ anchorID, id });
-  ctx.body = {
-    code: 200,
-    msg: result
-  };
-});
-
-// 观众是否可以开始绘制
-router.get("/canPaint", async ctx => {
-  const { anchorID } = ctx.query;
-  let result = await canPaintController({ anchorID });
-  ctx.body = {
-    code: 200,
-    ...result
-  };
-});
-
 // 观众绘制作品
-router.post("/startPaintAudience", async ctx => {
+router.post('/startPaintAudience', async ctx => {
   const { path, anchorID, id } = ctx.request.body;
   let result = await savePaintAudienceController({ path, anchorID, id });
   ctx.body = {
@@ -106,7 +100,7 @@ router.post("/startPaintAudience", async ctx => {
 });
 
 // 游戏结束获取排名
-router.get("/getRank", async ctx => {
+router.get('/getRank', async ctx => {
   const { identify, anchorID, id } = ctx.query;
   let result = await getRankController({ identify, anchorID, id });
   ctx.body = {
@@ -116,7 +110,7 @@ router.get("/getRank", async ctx => {
 });
 
 // 用户重新进入
-router.get("/againInto", async ctx => {
+router.get('/againInto', async ctx => {
   const { anchorID, id } = ctx.query;
   let result = await getRankController({ anchorID, id });
   ctx.body = {
@@ -125,4 +119,13 @@ router.get("/againInto", async ctx => {
   };
 });
 
+// 观众开始绘制
+router.get('/canPaint', async ctx => {
+  const { anchorID } = ctx.query;
+  let result = await canPaintController({ anchorID });
+  ctx.body = {
+    code: 200,
+    ...result
+  };
+});
 module.exports = router;
