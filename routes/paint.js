@@ -1,4 +1,5 @@
 const router = require('koa-router')();
+const decode = require('../tools/huya-ext/decode.js')
 const {
   statusController,
   startOrCloseController,
@@ -15,7 +16,9 @@ router.prefix('/paint');
 
 // 判断主播进入小程序的状态，是否没结束上一次的游戏
 router.get('/status', async ctx => {
-  const { anchorID } = ctx.query;
+  // const { anchorID } = ctx.query;
+  let { profileId } = decode()
+  let anchorID = profileId
   let result = await statusController(anchorID);
   let msg;
   switch (result.code) {
@@ -49,7 +52,9 @@ router.get('/status', async ctx => {
 
 // 主播点击开始/结束小程序
 router.get('/start2close', async ctx => {
-  const { anchorID, status, time } = ctx.query;
+  const { status, time } = ctx.query;
+  let { profileId } = decode()
+  let anchorID = profileId
   await startOrCloseController({ anchorID, status, time });
 
   ctx.body = {
@@ -60,21 +65,26 @@ router.get('/start2close', async ctx => {
 
 // 观众加入小程序
 router.get('/takeParkIn', async ctx => {
-  const { anchorID, id } = ctx.query;
+  const { id } = ctx.query;
+  let { profileId } = decode()
+  let anchorID = profileId
   let result = await takeParkInController({ anchorID, id });
   ctx.body = result;
 });
 
 // 获取时间
 router.get('/getStartTime', async ctx => {
-  const { anchorID } = ctx.query;
+  let { profileId } = decode()
+  let anchorID = profileId
   let result = await getStartTimeController({ anchorID });
   ctx.body = result;
 });
 
 // 主播绘制作品
 router.post('/startPaintAnchor', async ctx => {
-  const { anchorID, path } = ctx.request.body;
+  const { path } = ctx.request.body;
+  let { profileId } = decode()
+  let anchorID = profileId
   try {
     await savePathAnchorController({ anchorID, path });
     ctx.body = {
