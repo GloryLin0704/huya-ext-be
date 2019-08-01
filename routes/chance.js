@@ -80,18 +80,19 @@ router.get('/getTick', async ctx => {
 
 // 用户加入游戏
 router.get('/takeParkIn', async ctx => {
-  let { profileId } = decode()
+  let { profileId, userId } = decode()
   let anchorID = profileId
-  const { id } = ctx.query
+  let id = userId
   let result = await _.takeParkInController({ anchorID, id })
   ctx.body = result
 })
 
 // 用户提交挑战
 router.post('/saveChance', async ctx => {
-  let { profileId } = decode()
+  let { profileId, userId } = decode()
   let anchorID = profileId
-  const { chance, id, name, avatar } = ctx.request.body
+  let id = userId
+  const { chance, name, avatar } = ctx.request.body
   let result = await _.saveChanceController({
     anchorID,
     chance,
@@ -135,29 +136,56 @@ router.get('/getVotesResult', async ctx => {
   ctx.body = result
 })
 
-// 用户投票
+// 用户投票(三选一)
 router.post('/voteItems', async ctx => {
-  const { voteID, id } = ctx.request.body
-  let { profileId } = decode()
+  const { voteID } = ctx.request.body
+  let { profileId, userId } = decode()
   let anchorID = profileId
+  let id = userId
   let result = await _.voteItemsController({ anchorID, voteID, id })
   ctx.body = result
 })
 
 // 用户选择主播成功失败
 router.post('/voteSuccessOrFail', async ctx => {
-  const { lastStatus, id } = ctx.request.body
-  let { profileId } = decode()
+	const { voteStatus } = ctx.request.body
+	let { profileId,userId } = decode()
   let anchorID = profileId
-  let result = await _.lastStatusController({ anchorID, lastStatus, id })
+  let id  = userId
+  let result = await _.voteStatusController({ anchorID, voteStatus, id })
   ctx.body = result
 })
 
-// 返回主播成功失败
+// 返回主播成功失败投票数
 router.get('/result', async ctx => {
   let { profileId } = decode()
   let anchorID = profileId
+  let result = await _.returnVotesController({ anchorID })
+  ctx.body = result
+})
+
+// 返回主播挑战结果
+router.get('/getLastStatus', async ctx => {
+  let { profileId } = decode()
+  let anchorID = profileId
   let result = await _.returnResultController({ anchorID })
+  ctx.body = result
+})
+
+// 主播接受或者拒绝挑战
+router.get('/recOrRej', async ctx => {
+  const { chanceStatus } = ctx.query
+  let { profileId } = decode()
+  let anchorID = profileId
+  let result = await _.recOrRejController({ anchorID, chanceStatus })
+  ctx.body = result
+})
+
+// 用户查询主播是接受还是拒绝挑战
+router.get('/getRecOrRej', async ctx => {
+  let { profileId } = decode()
+  let anchorID = profileId
+  let result = await _.getRecOrRejController({ anchorID })
   ctx.body = result
 })
 

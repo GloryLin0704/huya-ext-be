@@ -9,7 +9,7 @@ const cors = require('koa2-cors')
 
 const chance = require('./routes/chance')
 const paint = require('./routes/paint')
-
+const token = require('./routes/getToken')
 
 // 具体参数我们在后面进行解释
 app.use(
@@ -53,6 +53,7 @@ app.use(async (ctx, next) => {
 // routes
 app.use(chance.routes(), chance.allowedMethods())
 app.use(paint.routes(), paint.allowedMethods())
+app.use(token.routes(), token.allowedMethods())
 
 // error-handling
 app.on('error', (err, ctx) => {

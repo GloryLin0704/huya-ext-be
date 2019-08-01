@@ -7,7 +7,6 @@ const statusController = async anchorID => {
     connectionForPaint,
     R('anchor', ['*'], ['anchorID'], [anchorID])
   )
-  console.log(result)
   if (result.length) {
     if (!Number(result[0].status)) {
       return {
@@ -35,6 +34,11 @@ const startOrCloseController = async ({ anchorID, status, time }) => {
 
   if (!Number(status)) {
     await db(connectionForPaint, D('audience', ['anchorID'], [anchorID]))
+    await db(connectionForPaint, C('audience', ['anchorID'], [anchorID]))
+    await db(
+      connectionForPaint,
+      U('anchor', ['isPaint'], ['anchorID'], [0, anchorID])
+    )
   }
 
   return result.length
@@ -63,30 +67,45 @@ const takeParkInController = async ({ anchorID, id }) => {
   let ifStart = tmpResult[0].status
 
   if (Number(ifStart)) {
-    if (result.length) {
-      let ids = result[0].allAudience
-      ids = ids.split(',')
-      if (ids.includes(id)) {
-        return {
-          code: 2004,
-          msg: '该用户已经参与游戏'
-        }
-      } else {
-        ids.push(id)
-      }
+    if (!result.length) {
+      console.log(1)
+      let audience = [id]
       await db(
         connectionForPaint,
-        U('audience', ['allAudience'], ['anchorID'], [ids, anchorID])
+        C('audience', ['anchorID', 'allAudience'], [anchorID, audience])
+      )
+      return {
+        code: 200,
+        msg: '用户成功参与游戏'
+      }
+    } else if (result[0].allAudience == null) {
+      console.log(2)
+      console.log(typeof allAudience, anchorID)
+      let audience = [id]
+      await db(
+        connectionForPaint,
+        U('audience', ['allAudience'], ['anchorID'], [audience, anchorID])
       )
       return {
         code: 200,
         msg: '用户成功参与游戏'
       }
     } else {
-      let audience = [id]
+      console.log(3)
+      let ids = result[0].allAudience
+      ids = ids.split(',')
+      for (let i = 0; i < ids.length; i++) {
+        if (ids[i] == id) {
+          return {
+            code: 2004,
+            msg: '该用户已经参与游戏'
+          }
+        }
+      }
+      ids.push(id)
       await db(
         connectionForPaint,
-        C('audience', ['anchorID', 'allAudience'], [anchorID, audience])
+        U('audience', ['allAudience'], ['anchorID'], [ids, anchorID])
       )
       return {
         code: 200,
@@ -116,25 +135,41 @@ const getStartTimeController = async ({ anchorID }) => {
 
 // 主播绘制作品
 const savePathAnchorController = async ({ anchorID, path }) => {
-  console.log(typeof path)
   path = JSON.stringify(path)
+  console.log('u', path)
   let result = await db(
     connectionForPaint,
-    R('anchor', ['status'], ['anchorID'], [anchorID])
+    R('anchor', ['status', 'isPaint'], ['anchorID'], [anchorID])
   )
+  if (result[0].isPaint) {
+    return {
+      code: 2008,
+      msg: '主播已经绘制过'
+    }
+  }
 
   if (Number(result[0].status)) {
-    return db(
+    await db(
       connectionForPaint,
-      U('anchor', ['curPath'], ['anchorID'], [path, anchorID])
+      U('anchor', ['curPath', 'isPaint'], ['anchorID'], [path, 1, anchorID])
     )
+    return {
+      code: 200,
+      msg: '主播绘制成功'
+    }
   } else {
     throw new Error()
   }
 }
 
 // 观众绘画
-const savePaintAudienceController = async ({ anchorID, id, path }) => {
+const savePaintAudienceController = async ({
+  anchorID,
+  id,
+  path,
+  name,
+  avatar
+}) => {
   let result = await db(
     connectionForPaint,
     R('audience', ['*'], ['anchorID'], [anchorID])
@@ -142,9 +177,11 @@ const savePaintAudienceController = async ({ anchorID, id, path }) => {
   let tmp = result[0].allPath
 
   let ifExist = false
+  // console.log('1', tmp)
   if (tmp) {
     tmp.split(';').forEach(e => {
-      e = JSON.parse(e)
+      console.log('123', e)
+      e = JSON.parse(`${e}`)
       if (e.id === id) {
         ifExist = true
       }
@@ -158,11 +195,18 @@ const savePaintAudienceController = async ({ anchorID, id, path }) => {
     }
   }
 
+  path = JSON.parse(path)
+  console.log(typeof path)
+
   let data = JSON.stringify({
     id,
+    name,
+    avatar,
     path
   })
   tmp = `${tmp ? tmp : ''}${tmp ? ';' : ''}${data}`
+  // console.log(typeof tmp)
+  console.log(tmp)
 
   await db(
     connectionForPaint,
@@ -174,22 +218,25 @@ const savePaintAudienceController = async ({ anchorID, id, path }) => {
   }
 }
 
+// 发起请求，对比相似度，返回 rank
+const getRank222Controller = async ({ anchorID }) => {}
+
 // 主播点击结束两端 rank / 或者关闭进来游戏未结束
 const getRankController = async ({ identify, anchorID, id }) => {
   let Uresult = await db(
     connectionForPaint,
     R('anchor', ['rank', 'curPath'], ['anchorID'], [anchorID])
   )
+
+  let lenR = Uresult[0].rank.length
+  let lenC = Uresult[0].curPath.length
+
   if (identify === 'U') {
     return {
-      rank: Uresult[0].rank,
-      anchorPath: Uresult[0].curPath
+      rank: JSON.parse(Uresult[0].rank.substring(1, lenR - 1)),
+      anchorPath: JSON.parse(Uresult[0].curPath.substring(1, lenC - 1))
     }
   } else {
-    let result = await db(
-      connectionForPaint,
-      R('anchor', ['curPath'], ['anchorID'], [anchorID])
-    )
     let tmp = await db(
       connectionForPaint,
       R('audience', ['allPath'], ['anchorID'], [anchorID])
@@ -203,8 +250,8 @@ const getRankController = async ({ identify, anchorID, id }) => {
     })
     if (selfPath) {
       return {
-        anchorPath: result[0].curPath,
-        rank: Uresult[0].rank,
+        rank: JSON.parse(Uresult[0].rank.substring(1, lenR - 1)),
+        anchorPath: JSON.parse(Uresult[0].curPath.substring(1, lenC - 1)),
         selfPath
       }
     } else {
@@ -216,33 +263,12 @@ const getRankController = async ({ identify, anchorID, id }) => {
   }
 }
 
-const againIntoController = async ({ anchorID, id }) => {
-  console.log(anchorID, id)
-  let result = await db(
-    connectionForPaint,
-    R('anchor', ['curPath'], ['anchorID'], [anchorID])
-  )
-  let tmp = await db(
-    connectionForPaint,
-    R('audience', ['allPath'], ['anchorID'], [anchorID])
-  )
-  let selfPath
-  tmp[0].allPath.split(';').forEach(e => {
-    e = JSON.parse(e)
-    if (e.id === id) {
-      selfPath = e.path
-    }
-  })
-}
-
 // 用户是否可以开始绘画
 const canPaintController = async ({ anchorID }) => {
   let result = await db(
     connectionForPaint,
     R('anchor', ['gameTime'], ['anchorID'], [anchorID])
   )
-
-  console.log(result[0])
 
   let gameTime = result[0].gameTime
 
@@ -266,6 +292,5 @@ module.exports = {
   savePaintAudienceController,
   getRankController,
   canPaintController,
-  getStartTimeController,
-  againIntoController
+  getStartTimeController
 }

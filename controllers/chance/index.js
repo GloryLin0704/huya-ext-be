@@ -39,6 +39,15 @@ const startOrCloseController = async ({ anchorID, status }) => {
   if (!Number(status)) {
     await db(connectionForChance, D('audience', ['anchorID'], [anchorID]))
     await db(connectionForChance, C('audience', ['anchorID'], [anchorID]))
+    await db(
+      connectionForChance,
+      U(
+        'anchor',
+        ['lastOk', 'lastFail', 'chanceStatus'],
+        ['anchorID'],
+        [0, 0, 0, anchorID]
+      )
+    )
   }
 
   return result.length
@@ -317,8 +326,10 @@ const getChanceController = async ({ anchorID }) => {
 
 // 主播选择三个选项
 const setVotesController = async ({ anchorID, items }) => {
+  // console.log(typeof items)
   // 这里接受的不知道是什么鬼  数组还是字符串
-  let tmp = items.split(',')
+  // let tmp = items.split(',')
+  let tmp = items
   let obj = []
   tmp.forEach((e, idx) => {
     let a = {
@@ -366,7 +377,7 @@ const getVotesResultController = async ({ anchorID }) => {
   }
 }
 
-// 用户投票
+// 用户三选一票
 const voteItemsController = async ({ anchorID, voteID, id }) => {
   let canVotes = true
   let tmp = await db(
@@ -419,8 +430,8 @@ const voteItemsController = async ({ anchorID, voteID, id }) => {
   }
 }
 
-// 用户最后投票
-const lastStatusController = async ({ anchorID, lastStatus, id }) => {
+// 用户最后挑战投票
+const voteStatusController = async ({ anchorID, voteStatus, id }) => {
   let canVotes = true
   let tmp = await db(
     connectionForChance,
@@ -453,14 +464,7 @@ const lastStatusController = async ({ anchorID, lastStatus, id }) => {
   )
   originVotes = originVotes[0]
 
-  if (originVotes.lastOk == null) {
-    originVotes.lastOk = 0
-  }
-  if (originVotes.lastFail == null) {
-    originVotes.lastFail = 0
-  }
-
-  if (Number(lastStatus)) {
+  if (Number(voteStatus)) {
     originVotes.lastOk++
   } else {
     originVotes.lastFail++
@@ -482,8 +486,8 @@ const lastStatusController = async ({ anchorID, lastStatus, id }) => {
   }
 }
 
-// 主播获取结果
-const returnResultController = async ({ anchorID }) => {
+// 主播获取成功失败投票数
+const returnVotesController = async ({ anchorID }) => {
   let result = await db(
     connectionForChance,
     R('anchor', ['lastOk', 'lastFail'], ['anchorID'], [anchorID])
@@ -493,6 +497,49 @@ const returnResultController = async ({ anchorID }) => {
     code: 2000,
     success: result.lastOk,
     fail: result.lastFail
+  }
+}
+
+// 主播获取最后挑战结果
+const returnResultController = async ({ anchorID }) => {
+  let result = await db(
+    connectionForChance,
+    R('anchor', ['lastOk', 'lastFail'], ['anchorID'], [anchorID])
+  )
+  result = result[0]
+  let lastStatus = result.lastOk >= result.lastFail ? 'success' : 'fail'
+  return {
+    code: 2000,
+    lastStatus
+  }
+}
+
+// 主播接受或者拒绝挑战
+const recOrRejController = async ({ anchorID, chanceStatus }) => {
+  await db(
+    connectionForChance,
+    U('anchor', ['chanceStatus'], ['anchorID'], [chanceStatus, anchorID])
+  )
+  await db(
+    connectionForChance,
+    U('anchor', ['tick'], ['anchorID'], ['3', anchorID])
+  )
+  return {
+    code: 2000,
+    msg: `选择成功`
+  }
+}
+
+// 用户查询主播是接受还是拒绝挑战
+const getRecOrRejController = async ({ anchorID }) => {
+  let result = await db(
+    connectionForChance,
+    R('anchor', ['chanceStatus'], ['anchorID'], [anchorID])
+  )
+  let chanceStatus = result[0].chanceStatus
+  return {
+    code: 2000,
+    chanceStatus
   }
 }
 
@@ -513,7 +560,10 @@ module.exports = {
   getTickController,
   getVotesController,
   voteItemsController,
-  lastStatusController,
+  voteStatusController,
+  returnVotesController,
   returnResultController,
-  getVotesResultController
+  getVotesResultController,
+  recOrRejController,
+  getRecOrRejController
 }
