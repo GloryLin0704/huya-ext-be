@@ -17,5 +17,4 @@ function decoded() {
   }
 }
 
-decoded()
 module.exports = decoded
