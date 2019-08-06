@@ -113,7 +113,4 @@ var user3Y = [139,139,139,138,137,137,136,135,134,133,132,131,131,131,131,131,13
 
 [anchorX, anchorY] = upsample(anchorX, anchorY, n);
 
-var dis1 = euclideanDistance(anchorX, anchorY, user1X, user1Y, maxX);
-var dis2 = euclideanDistance(anchorX, anchorY, user2X, user2Y, maxX);
-var dis3 = euclideanDistance(anchorX, anchorY, user3X, user3Y, maxX);
 module.exports = euclideanDistance

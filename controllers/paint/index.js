@@ -38,7 +38,7 @@ const startOrCloseController = async ({ anchorID, status, time }) => {
     await db(connectionForPaint, C("audience", ["anchorID"], [anchorID]));
     await db(
       connectionForPaint,
-      U("anchor", ["isPaint"], ["anchorID"], [0, anchorID])
+      U("anchor", ["isPaint", "rank"], ["anchorID"], [0, "", anchorID])
     );
   }
 
@@ -277,7 +277,7 @@ const getSimilarityController = async ({ anchorID }) => {
     R("anchor", ["rank"], ["anchorID"], [anchorID])
   );
   tmp = tmp[0].rank;
-  tmp = JSON.parse(tmp)
+  tmp = JSON.parse(tmp);
   return {
     code: 2000,
     msg: `排序完成`,
@@ -294,6 +294,13 @@ const getRankController = async ({ identify, anchorID, id }) => {
 
   let lenR = Uresult[0].rank.length;
   let lenC = Uresult[0].curPath.length;
+
+  if (Uresult[0].rank.length < 1) {
+    return {
+      code: 2009,
+      msg: "游戏还没结束"
+    };
+  }
 
   if (identify === "U") {
     return {

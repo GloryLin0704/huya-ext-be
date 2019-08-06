@@ -53,6 +53,7 @@ router.get("/status", async ctx => {
 // 主播点击开始/结束小程序
 router.get("/start2close", async ctx => {
   const { status, time } = ctx.query;
+  console.log(typeof status)
   let { profileId } = decode();
   let anchorID = profileId;
   await startOrCloseController({ anchorID, status, time });
@@ -155,4 +156,5 @@ router.get("/canPaint", async ctx => {
     ...result
   };
 });
+
 module.exports = router;
