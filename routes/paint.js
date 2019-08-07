@@ -52,6 +52,8 @@ router.get("/status", async ctx => {
 
 // 主播点击开始/结束小程序
 router.get("/start2close", async ctx => {
+  let token = decode(ctx.header.authorization, 0)
+  console.log('U',token)
   const { status, time } = ctx.query;
   console.log(typeof status)
   let { profileId } = decode();
@@ -66,6 +68,8 @@ router.get("/start2close", async ctx => {
 
 // 观众加入小程序
 router.get("/takeParkIn", async ctx => {
+  let token = decode(ctx.header.authorization, 0)
+  console.log('P',token)
   let { profileId, userId } = decode();
   let anchorID = profileId;
   let id = userId;
