@@ -16,6 +16,5 @@ let sToken = jwt.sign(
   config.appSecret
 )
 
-console.log(sToken)
 
 module.exports = { sToken, iat, exp }
