@@ -1,5 +1,5 @@
 ﻿# Host: localhost  (Version: 5.5.53)
-# Date: 2019-08-08 11:20:16
+# Date: 2019-08-09 18:26:41
 # Generator: MySQL-Front 5.3  (Build 4.234)
 
 /*!40101 SET NAMES utf8 */;
@@ -18,8 +18,8 @@ CREATE TABLE `anchor` (
   `status` varchar(255) DEFAULT NULL,
   `success` varchar(255) DEFAULT NULL,
   `fail` varchar(255) DEFAULT NULL,
-  `tick` varchar(255) DEFAULT NULL,
-  `tickStatus` varchar(255) DEFAULT NULL,
+  `tick` varchar(255) DEFAULT '0',
+  `tickStatus` varchar(255) DEFAULT 'null',
   `lastOk` int(11) DEFAULT '0',
   `lastFail` int(11) DEFAULT '0',
   `chanceStatus` int(11) DEFAULT '0',
@@ -42,10 +42,11 @@ CREATE TABLE `anchor` (
 DROP TABLE IF EXISTS `audience`;
 CREATE TABLE `audience` (
   `anchorID` varchar(255) DEFAULT NULL,
-  `votes` varchar(255) DEFAULT NULL,
+  `votes` longtext,
   `lastVotes` varchar(255) DEFAULT NULL,
-  `allVotes` varchar(255) DEFAULT NULL,
-  `allAudience` longtext
+  `allVotes` longtext,
+  `allAudience` longtext,
+  `voted` longtext
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8mb4;
 
 #

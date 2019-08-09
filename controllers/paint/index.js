@@ -1,6 +1,7 @@
 const { connectionForPaint, db } = require('../../tools/mysql/index')
 const { C, R, U, D } = require('../../tools/mysql/sql')
 const distance = require('../../tools/huya-ext/distance')
+const toOne = require('../../tools/huya-ext/toOne')
 
 // 判断主播进入小程序的状态，是否没结束上一次的游戏
 const statusController = async anchorID => {
@@ -314,8 +315,10 @@ const getRankController = async ({ identify, anchorID, id }) => {
   }
 
   if (identify === 'U') {
+    rank = JSON.parse(Uresult[0].rank)
+    rank = toOne(rank)
     return {
-      rank: JSON.parse(Uresult[0].rank),
+      rank,
       anchorPath: JSON.parse(Uresult[0].curPath.substring(1, lenC - 1))
     }
   } else {
@@ -337,6 +340,7 @@ const getRankController = async ({ identify, anchorID, id }) => {
         myRank = idx + 1
       }
     })
+    rank = toOne(rank)
     if (selfPath) {
       return {
         rank,

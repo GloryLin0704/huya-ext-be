@@ -7,7 +7,11 @@ const statusController = async anchorID => {
     connectionForChance,
     R('anchor', ['*'], ['anchorID'], [anchorID])
   )
+
+  console.log('12321321', anchorID)
+
   if (result.length) {
+    console.log(1)
     if (!Number(result[0].status)) {
       return {
         code: 2002,
@@ -214,10 +218,14 @@ const getTickController = async ({ anchorID }) => {
     connectionForChance,
     R('anchor', ['time', 'tick', 'tickStatus'], ['anchorID'], [anchorID])
   )
+  console.log('getTick', anchorID, result)
   result = result[0]
   return {
     code: 2000,
     ...result
+    // tick:'0',
+    // tickStatus:'start',
+    // time:'1231232'
   }
 }
 
@@ -228,6 +236,8 @@ const takeParkInController = async ({ anchorID, id }) => {
     R('audience', ['*'], ['anchorID'], [anchorID])
   )
 
+  console.log('takeParkIn', result)
+
   let tmpResult = await db(
     connectionForChance,
     R('anchor', ['status'], ['anchorID'], [anchorID])
@@ -235,7 +245,7 @@ const takeParkInController = async ({ anchorID, id }) => {
 
   let ifStart = tmpResult[0].status
 
-  if (Number(ifStart)) {
+  // if (Number(ifStart)) {
     if (result.length) {
       if (!result[0].allAudience) {
         let audience = [id]
@@ -272,17 +282,20 @@ const takeParkInController = async ({ anchorID, id }) => {
         connectionForChance,
         C('audience', ['anchorID', 'allAudience'], [anchorID, audience])
       )
+			let tmp = await db(connectionForChance, R('audience', ['*'], ['anchorID'], [anchorID]))
+      console.log('12321321321', tmp)
       return {
         code: 2000,
         msg: '用户成功参与游戏'
       }
     }
-  } else {
-    return {
-      code: 2006,
-      msg: '主播还未开始游戏'
-    }
-  }
+  // } else {
+		
+  //   return {
+  //     code: 2006,
+  //     msg: '主播还未开始游戏'
+  //   }
+  // }
 }
 
 // 用户提交挑战
@@ -292,8 +305,10 @@ const saveChanceController = async ({ anchorID, chance, id, name, avatar }) => {
     R('audience', ['allVotes'], ['anchorID'], [anchorID])
   )
 
+  console.log('saveChance', result[0])
+
   let ifExist = false
-  if (result[0].allVotes != null) {
+  if (result[0] && result[0].allVotes != null) {
     let tmp = result[0].allVotes.split(';')
     tmp.forEach(e => {
       if (e.includes(id)) {
@@ -315,8 +330,6 @@ const saveChanceController = async ({ anchorID, chance, id, name, avatar }) => {
     chance
   }
   tmp = JSON.stringify(tmp)
-
-	console.log(tmp)
 
   let vote = `${
     result[0].allVotes != null ? `${result[0].allVotes};` : ''
@@ -347,19 +360,15 @@ const getChanceController = async ({ anchorID }) => {
   }
 
   let result = ''
-  console.log('vote', tmp[0].allVotes)
+  console.log('getChance', tmp)
   if (tmp[0].allVotes !== null) {
-		console.log('here')
-		result = getRandom(tmp[0].allVotes.split(';'))
-		console.log('whart', result)
+    result = getRandom(tmp[0].allVotes.split(';'))
     result = JSON.parse(result)
   }
 
-  console.log('zxc', result)
-
   return {
     code: 2000,
-    msg:result
+    msg: result
   }
 }
 
@@ -420,9 +429,10 @@ const voteItemsController = async ({ anchorID, voteID, id }) => {
   let canVotes = true
   let tmp = await db(
     connectionForChance,
-    R('audience', ['votes'], ['anchorID'], [anchorID])
+    R('audience', ['votes', 'voted'], ['anchorID'], [anchorID])
   )
   tmpVotes = tmp[0].votes
+
   if (tmpVotes != null && tmpVotes.includes(id)) {
     canVotes = false
   }
@@ -437,9 +447,18 @@ const voteItemsController = async ({ anchorID, voteID, id }) => {
   if (tmpVotes != null) {
     _votes = `${tmpVotes},${id}`
   }
+
+  let tmpVoted = {
+    id,
+    voteID
+  }
+  tmpVoted = JSON.stringify(tmpVoted)
+
+  let voted = `${tmp[0].voted != null ? `${tmp[0].voted};` : ''}${tmpVoted}`
+
   await db(
     connectionForChance,
-    U('audience', ['votes'], ['anchorID'], [_votes, anchorID])
+    U('audience', ['votes', 'voted'], ['anchorID'], [_votes, voted, anchorID])
   )
 
   // 更新主播表
@@ -465,6 +484,66 @@ const voteItemsController = async ({ anchorID, voteID, id }) => {
   return {
     code: 2000,
     msg: '投票成功'
+  }
+}
+
+// 用户知道自己干了嘛
+const bandicamController = async ({ anchorID, id }) => {
+  let result = await db(
+    connectionForChance,
+    R('audience', ['voted', 'votes'], ['anchorID'], [anchorID])
+  )
+  result = result[0]
+  let votedResult = undefined
+  if (result.voted != null || result.voted) {
+    let tmp = result.voted.split(';')
+    tmp.forEach(e => {
+      e = JSON.parse(e)
+      if (e.id === id) {
+        votedResult = e
+      }
+    })
+  }
+  if (votedResult) {
+    return {
+      code: 2000,
+      votedResult
+    }
+  } else {
+    return {
+      code: 2010,
+      msg: '用户还没投票'
+    }
+  }
+}
+
+const fuckHGController = async ({ anchorID, id }) => {
+  let result = await db(
+    connectionForChance,
+    R('audience', ['allVotes'], ['anchorID'], [anchorID])
+  )
+  console.log('fuck', result)
+  result = result[0]
+  let votesResult = undefined
+  if ((result && result.allVotes != null) || result.allVotes) {
+    let tmp = result.allVotes.split(';')
+    tmp.forEach(e => {
+      e = JSON.parse(e)
+      if (e.id === id) {
+        votesResult = e
+      }
+    })
+  }
+  if (votesResult) {
+    return {
+      code: 2000,
+      votesResult
+    }
+  } else {
+    return {
+      code: 2011,
+      msg: '用户还没填愿望'
+    }
   }
 }
 
@@ -608,5 +687,7 @@ module.exports = {
   getVotesResultController,
   recOrRejController,
   getRecOrRejController,
-  getSuccessResultController
+  getSuccessResultController,
+  bandicamController,
+  fuckHGController
 }

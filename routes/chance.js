@@ -91,8 +91,7 @@ router.get('/takeParkIn', async ctx => {
   let { profileId, userId } = decode(ctx.header.authorization, 1)
   let anchorID = profileId
   let id = userId
-	let result = await _.takeParkInController({ anchorID, id })
-	console.log('123',result)
+  let result = await _.takeParkInController({ anchorID, id })
   ctx.body = result
 })
 
@@ -116,8 +115,8 @@ router.post('/saveChance', async ctx => {
 router.get('/getChance', async ctx => {
   let { profileId } = decode(ctx.header.authorization, 1)
   let anchorID = profileId
-	let result = await _.getChanceController({ anchorID })
-	console.log(result)
+  let result = await _.getChanceController({ anchorID })
+  console.log(result)
   ctx.body = result
 })
 
@@ -156,13 +155,31 @@ router.post('/voteItems', async ctx => {
   ctx.body = result
 })
 
+// 用户知道自己干了什么
+router.get('/bandicam', async ctx => {
+  let { profileId, userId } = decode(ctx.header.authorization, 1)
+  let anchorID = profileId
+  let id = userId
+  let result = await _.bandicamController({ anchorID, id })
+  ctx.body = result
+})
+
+// 用户知道自己填没填写
+router.get('/fuckHG', async ctx => {
+	let { profileId, userId } = decode(ctx.header.authorization, 1)
+  let anchorID = profileId
+  let id = userId
+  let result = await _.fuckHGController({ anchorID, id })
+  ctx.body = result
+})
+
 // 用户选择主播成功失败
 router.post('/voteSuccessOrFail', async ctx => {
   const { voteStatus } = ctx.request.body
   let { profileId, userId } = decode(ctx.header.authorization, 1)
   let anchorID = profileId
   let id = userId
-	let result = await _.voteStatusController({ anchorID, voteStatus, id })
+  let result = await _.voteStatusController({ anchorID, voteStatus, id })
   ctx.body = result
 })
 
